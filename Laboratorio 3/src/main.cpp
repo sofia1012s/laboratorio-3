@@ -15,6 +15,7 @@
 //Botones
 #define boton1 23
 #define boton2 22
+<<<<<<< HEAD
 #define boton3 21
 #define boton4 19
 
@@ -35,6 +36,21 @@
 #define freqPWMLedA 5000    //frecuencia en Hz
 #define resolutionPWMLedA 8 //8 bits de resolucion (0-255)
 #define pinPWMLedA 27        //GPIO  para tener la salida del PWM
+=======
+#define boton3
+#define boton4
+
+//Leds
+#define Led rojo
+#define Led verde
+#define Led azul
+
+//Parámetros PWM para led
+#define pwmChannelLed 3    // 16 canales 0-15
+#define freqPWMLed 5000    //frecuencia en Hz
+#define resolutionPWMLed 8 //8 bits de resolucion (0-255)
+#define pinPWMLed 3        //GPIO  para tener la salida del PWM
+>>>>>>> parent of 6f4cbc4 (Parte 1)
 
 //Parámetro PWM servo motor
 #define pwmChannelServo 0
