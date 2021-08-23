@@ -25,20 +25,38 @@
 #define pinPWMServo 13        //GPIO  para tener la salida del PWM
 
 //Parámetro PWM led Red
-#define pwmChannelLedR 1
+#define pwmChannelLedR 2
 #define freqPWMLedR 5000    //frecuencia en Hz
 #define resolutionPWMLedR 8 //8 bits
 #define pinPWMLedR 12       //GPIO  para tener la salida del PWM
 
+//Parámetro PWM led Green
+#define pwmChannelLedG 1
+#define freqPWMLedG 5000    //frecuencia en Hz
+#define resolutionPWMLedG 8 //8 bits
+#define pinPWMLedG 27       //GPIO  para tener la salida del PWM
+
+//Parámetro PWM led Blue
+#define pwmChannelLedB 3
+#define freqPWMLedB 5000    //frecuencia en Hz
+#define resolutionPWMLedB 8 //8 bits
+#define pinPWMLedB 26       //GPIO  para tener la salida del PWM
+
 int contador = 0;
+int contadorLed = 0;
+int contadorBoton3 = 0;
 
 //*****************************************************************************
 //Prototipos de funcion
 //*****************************************************************************
 void configurarPWMLedR(void);
+void configurarPWMLedG(void);
+void configurarPWMLedB(void);
 void configurarPWMServo(void);
 void configurarBoton1(void);
 void configurarBoton2(void);
+void configurarBoton3(void);
+void encenderLeds(void);
 void moverServo();
 
 //*****************************************************************************
@@ -48,7 +66,23 @@ void moverServo();
 //*****************************************************************************
 //ISR: interrupciones
 //*****************************************************************************
+void IRAM_ATTR ISRBoton3() //interrupción para botón 1 (Aumento)
+{
+  static unsigned long ultimo_tiempo_interrupcion1 = 0; //último tiempo de la interrupción
+  unsigned long tiempo_interrupcion1 = millis();        //tiempo actual de la interrupción
 
+  //Si la interrupcion dura menos de 200ms, asumir que es un rebote e ignorar
+  if (tiempo_interrupcion1 - ultimo_tiempo_interrupcion1 > 200)
+  {
+    contadorBoton3++; //aumenta 1 al contador de botón
+
+    if (contadorBoton3 > 3) //si es mayor a 15 regresa el valor a cero
+    {
+      contadorBoton3 = 0;
+    }
+  }
+  ultimo_tiempo_interrupcion1 = tiempo_interrupcion1; //actualiza el valor del tiempo de la interrupción
+}
 //*****************************************************************************
 //configuracion
 //*****************************************************************************
@@ -61,6 +95,9 @@ void setup()
   pinMode(pinPWMServo, OUTPUT);
   configurarPWMServo();
   configurarPWMLedR();
+  configurarPWMLedG();
+  configurarPWMLedB();
+  configurarBoton3();
 }
 
 //*****************************************************************************
@@ -80,23 +117,7 @@ void loop()
     moverServo();
   }
 
-  if (digitalRead(boton3) == 0)
-  {
-    for (int dutyCycle = 0; dutyCycle <= 255; dutyCycle++)
-    {
-      // changing the LED brightness with PWM
-      ledcWrite(pwmChannelLedR, dutyCycle);
-      delay(15);
-    }
-
-    // decrease the LED brightness
-    for (int dutyCycle = 255; dutyCycle >= 0; dutyCycle--)
-    {
-      // changing the LED brightness with PWM
-      ledcWrite(pwmChannelLedR, dutyCycle);
-      delay(15);
-    }
-  }
+  encenderLeds();
 }
 
 //*****************************************************************************
@@ -120,6 +141,24 @@ void configurarPWMLedR(void)
   ledcAttachPin(pinPWMLedR, pwmChannelLedR);
 }
 
+void configurarPWMLedG(void)
+{
+  //Paso 1: Configurar el modulo PWM
+  ledcSetup(pwmChannelLedG, freqPWMLedG, resolutionPWMLedG);
+
+  //Paso 2: seleccionar en que GPIO tendremos nuestra señal PWM
+  ledcAttachPin(pinPWMLedG, pwmChannelLedG);
+}
+
+void configurarPWMLedB(void)
+{
+  //Paso 1: Configurar el modulo PWM
+  ledcSetup(pwmChannelLedB, freqPWMLedB, resolutionPWMLedB);
+
+  //Paso 2: seleccionar en que GPIO tendremos nuestra señal PWM
+  ledcAttachPin(pinPWMLedB, pwmChannelLedB);
+}
+
 //Botón para mover servo a la derecha
 void moverServo()
 {
@@ -137,5 +176,36 @@ void moverServo()
     int ang = (((contador / 180.0) * 2000) / 20000.0 * 65536.0) + 1634;
     ledcWrite(pwmChannelServo, ang); // tell servo to go to position in variable 'pos'
     delay(15);
+  }
+}
+void configurarBoton3(void)
+{
+  //me coloca una interrupción en el botón 1 (durante el cambio de alto a bajo)
+  attachInterrupt(digitalPinToInterrupt(boton3), ISRBoton3, RISING);
+}
+
+void encenderLeds(void)
+{
+    switch (contadorBoton3)
+  {
+  case 1:
+    ledcWrite(pwmChannelLedR, 255);
+    ledcWrite(pwmChannelLedG, 0);
+    ledcWrite(pwmChannelLedB, 0);
+    break;
+  case 2:
+    ledcWrite(pwmChannelLedG, 255);
+    ledcWrite(pwmChannelLedR, 0);
+    ledcWrite(pwmChannelLedB, 0);
+    break;
+  case 3:
+    ledcWrite(pwmChannelLedG, 0);
+    ledcWrite(pwmChannelLedR, 0);
+    ledcWrite(pwmChannelLedB, 255);
+    break;
+  default:
+    ledcWrite(pwmChannelLedG, 0);
+    ledcWrite(pwmChannelLedR, 0);
+    ledcWrite(pwmChannelLedB, 0);
   }
 }
