@@ -6,15 +6,15 @@
 //*****************************************************************************
 //Librerias
 //*****************************************************************************
-#include <Arduino.h> 
+#include <Arduino.h>
 
 //*****************************************************************************
 //Definicion etiquetas
 //*****************************************************************************
 
 //Botones
-#define boton1 
-#define boton2
+#define boton1 23
+#define boton2 22
 #define boton3
 #define boton4
 
@@ -24,23 +24,26 @@
 #define Led azul
 
 //Parámetros PWM para led
-#define pwmChannelLed  2// 16 canales 0-15
-#define freqPWMLed 5000 //frecuencia en Hz
+#define pwmChannelLed 3    // 16 canales 0-15
+#define freqPWMLed 5000    //frecuencia en Hz
 #define resolutionPWMLed 8 //8 bits de resolucion (0-255)
-#define pinPWMLed     3//GPIO  para tener la salida del PWM
-
+#define pinPWMLed 3        //GPIO  para tener la salida del PWM
 
 //Parámetro PWM servo motor
-#define pwmChannelServo 1
-#define freqPWMServo 50 //frecuencia en Hz
-#define resolutionPWMServo 8 //8 bits de resolucion (0-255)
-#define pinPWMServo 5//GPIO  para tener la salida del PWM
+#define pwmChannelServo 0
+#define freqPWMServo 50       //frecuencia en Hz
+#define resolutionPWMServo 16 //8 bits de resolucion (0-255)
+#define pinPWMServo 13        //GPIO  para tener la salida del PWM
 
+int contador = 0;
 //*****************************************************************************
 //Prototipos de funcion
 //*****************************************************************************
 void configurarPWMLed(void);
 void configurarPWMServo(void);
+void configurarBoton1(void);
+void moverServo();
+void SetServoPos(float pos);
 
 //*****************************************************************************
 //Varibles globales
@@ -49,15 +52,16 @@ void configurarPWMServo(void);
 //*****************************************************************************
 //ISR: interrupciones
 //*****************************************************************************
-//void IRAM_ATTR ISR(){}
 
 //*****************************************************************************
 //configuracion
 //*****************************************************************************
 void setup()
 {
-  configurarPWMLed();
-  
+  pinMode(boton1, INPUT_PULLUP);
+  pinMode(boton2, INPUT_PULLUP);
+  pinMode(pinPWMServo, OUTPUT);
+  configurarPWMServo();
 }
 
 //*****************************************************************************
@@ -65,18 +69,17 @@ void setup()
 //*****************************************************************************
 void loop()
 {
-  /**
-   * for (int dutycycle = 0; dutycycle < 256; dutycycle++)
+  if (digitalRead(boton1) == 0)
   {
-    ledcWrite(pwmChannelLed, dutycycle);
-    delay(10);
+    contador-=2;
+    moverServo();
   }
 
-  for (int dutycycle = 255; dutycycle > 0; dutycycle--)
+  if (digitalRead(boton2) == 0)
   {
-    ledcWrite(pwmChannelLed, dutycycle);
-    delay(10);
-  }*/
+    contador+=2;
+    moverServo();
+  }
 }
 
 //*****************************************************************************
@@ -100,8 +103,30 @@ void configurarPWMServo(void)
   ledcAttachPin(pinPWMServo, pwmChannelServo);
 }
 
-void configurarBoton1(void)
+//Botón para mover servo a la derecha
+void moverServo()
 {
-  ledcWrite(pwmChannelLed, 255);
+  if (contador == 180)
+  {
+    contador = 180;
+  }
 
+  else if (contador == 0)
+  {
+    contador = 0;
+  }
+  else
+  {
+    int ang = (((contador / 180.0) * 2000) / 20000.0 * 65536.0) + 1634;
+    ledcWrite(pwmChannelServo, ang); // tell servo to go to position in variable 'pos'
+    delay(15);
+  }
+
+  /*
+  for (pos = 180; pos >= 0; pos -= 1)
+  { // goes from 180 degrees to 0 degrees
+    int ang = (((pos / 180.0) * 2000) / 20000.0 * 65536.0) + 1634;
+    ledcWrite(pwmChannelServo, ang); // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }*/
 }
