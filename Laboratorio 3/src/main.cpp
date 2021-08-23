@@ -43,8 +43,8 @@
 #define pinPWMLedB 26       //GPIO  para tener la salida del PWM
 
 int contador = 0;
-int contadorLed = 0;
 int contadorBoton3 = 0;
+int contadorBoton4 = 0;
 
 //*****************************************************************************
 //Prototipos de funcion
@@ -56,6 +56,7 @@ void configurarPWMServo(void);
 void configurarBoton1(void);
 void configurarBoton2(void);
 void configurarBoton3(void);
+void configurarBoton4(void);
 void encenderLeds(void);
 void moverServo();
 
@@ -83,6 +84,24 @@ void IRAM_ATTR ISRBoton3() //interrupción para botón 1 (Aumento)
   }
   ultimo_tiempo_interrupcion1 = tiempo_interrupcion1; //actualiza el valor del tiempo de la interrupción
 }
+
+void IRAM_ATTR ISRBoton4() //interrupción para botón 1 (Aumento)
+{
+  static unsigned long ultimo_tiempo_interrupcion2 = 0; //último tiempo de la interrupción
+  unsigned long tiempo_interrupcion2 = millis();        //tiempo actual de la interrupción
+
+  //Si la interrupcion dura menos de 200ms, asumir que es un rebote e ignorar
+  if (tiempo_interrupcion2 - ultimo_tiempo_interrupcion2 > 200)
+  {
+    contadorBoton4 += 50; //aumenta 1 al contador de botón
+
+    if (contadorBoton4 > 255) //si es mayor a 15 regresa el valor a cero
+    {
+      contadorBoton4 = 0;
+    }
+  }
+  ultimo_tiempo_interrupcion2 = tiempo_interrupcion2; //actualiza el valor del tiempo de la interrupción
+}
 //*****************************************************************************
 //configuracion
 //*****************************************************************************
@@ -98,6 +117,7 @@ void setup()
   configurarPWMLedG();
   configurarPWMLedB();
   configurarBoton3();
+  configurarBoton4();
 }
 
 //*****************************************************************************
@@ -178,34 +198,31 @@ void moverServo()
     delay(15);
   }
 }
+
 void configurarBoton3(void)
 {
   //me coloca una interrupción en el botón 1 (durante el cambio de alto a bajo)
   attachInterrupt(digitalPinToInterrupt(boton3), ISRBoton3, RISING);
 }
 
+void configurarBoton4(void)
+{
+  //me coloca una interrupción en el botón 1 (durante el cambio de alto a bajo)
+  attachInterrupt(digitalPinToInterrupt(boton4), ISRBoton4, RISING);
+}
+
 void encenderLeds(void)
 {
-    switch (contadorBoton3)
+  switch (contadorBoton3)
   {
   case 1:
-    ledcWrite(pwmChannelLedR, 255);
-    ledcWrite(pwmChannelLedG, 0);
-    ledcWrite(pwmChannelLedB, 0);
+    ledcWrite(pwmChannelLedR, contadorBoton4);
     break;
   case 2:
-    ledcWrite(pwmChannelLedG, 255);
-    ledcWrite(pwmChannelLedR, 0);
-    ledcWrite(pwmChannelLedB, 0);
+    ledcWrite(pwmChannelLedG, contadorBoton4);
     break;
   case 3:
-    ledcWrite(pwmChannelLedG, 0);
-    ledcWrite(pwmChannelLedR, 0);
-    ledcWrite(pwmChannelLedB, 255);
+    ledcWrite(pwmChannelLedB, contadorBoton4);
     break;
-  default:
-    ledcWrite(pwmChannelLedG, 0);
-    ledcWrite(pwmChannelLedR, 0);
-    ledcWrite(pwmChannelLedB, 0);
   }
 }
