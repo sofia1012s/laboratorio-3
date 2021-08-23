@@ -21,7 +21,7 @@
 //Leds
 #define Led rojo
 #define Led verde
-#define Led azul
+#define Led amarillo
 
 //Parámetros PWM para led
 #define pwmChannelLed 3    // 16 canales 0-15
